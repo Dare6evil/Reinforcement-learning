@@ -9,17 +9,17 @@ import models
 
 criterion = torch.nn.MSELoss()
 environment = gymnasium.make('LunarLander-v3', render_mode='human')
+episode = 1000
 epsilon_decay = 0.995
 epsilon_end = 0.1
 epsilon_start = 1.0
 epsilon = epsilon_start
 gamma = 0.9
 learning_rate = 0.01
-n_episodes = 1000
 observation, _ = environment.reset()
 q_network = models.QNetwork(*environment.observation_space.shape, environment.action_space.n)
 optimizer = torch.optim.SGD(q_network.parameters(), learning_rate)
-for n_episode in range(n_episodes):
+for i in range(episode):
     while True:
         if epsilon < numpy.random.rand():
             action = q_network(torch.Tensor(observation)).argmax().item()

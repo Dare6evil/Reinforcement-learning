@@ -1,5 +1,5 @@
 import collections
-import random
+import numpy
 
 
 class ReplayBuffer:
@@ -13,4 +13,7 @@ class ReplayBuffer:
         self.buffer.append(args)
 
     def sample(self, batch_size):
-        return zip(*random.sample(self.buffer, batch_size))
+        delta_batch = numpy.array([self.buffer[i][-1].detach() for i in range(len(self.buffer))])
+        delta_batch -= delta_batch.max()
+        return zip(*[self.buffer[i] for i in
+                     numpy.random.choice(len(self.buffer), batch_size, p=delta_batch / delta_batch.sum())])

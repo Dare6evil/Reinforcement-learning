@@ -41,8 +41,10 @@ for i in range(episode):
         if batch_size < len(replay_buffer):
             observation_batch, action_batch, reward_batch, next_observation_batch, done_batch, _ = replay_buffer.sample(
                 batch_size)
-            loss = criterion((1 - torch.Tensor(numpy.array(done_batch))) * gamma * target_q_network(
-                torch.Tensor(numpy.array(next_observation_batch)).detach()).max(axis=1).values + torch.Tensor(
+            loss = criterion((1 - torch.Tensor(numpy.array(done_batch))) * gamma *
+                             target_q_network(torch.Tensor(numpy.array(next_observation_batch)).detach())[
+                                 numpy.arange(batch_size), q_network(
+                                     torch.Tensor(numpy.array(observation_batch))).argmax(axis=1)] + torch.Tensor(
                 reward_batch), q_network(torch.Tensor(numpy.array(observation_batch)))[
                                  numpy.arange(batch_size), action_batch])
             optimizer.zero_grad()

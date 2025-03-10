@@ -9,7 +9,7 @@ import models
 
 criterion = torch.nn.MSELoss()
 environment = gymnasium.make('LunarLander-v3', render_mode='human')
-episode = 1000
+episode = 300
 epsilon_decay = 0.995
 epsilon_end = 0.1
 epsilon_start = 1.0

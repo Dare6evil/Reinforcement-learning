@@ -13,7 +13,7 @@ batch_size = 32
 buffer_size = 10000
 criterion = torch.nn.MSELoss()
 environment = gymnasium.make('LunarLander-v3', render_mode='human')
-episode = 1000
+episode = 300
 epsilon_decay = 0.995
 epsilon_end = 0.1
 epsilon_start = 1.0
@@ -58,4 +58,4 @@ for i in range(episode):
     if not i % sync_interval:
         target_q_network = copy.deepcopy(q_network)
 environment.close()
-torch.save(q_network.state_dict(), 'DeepQNetwork.pth')
+torch.save(q_network.state_dict(), 'DoubleDeepQNetwork.pth')

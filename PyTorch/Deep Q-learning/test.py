@@ -1,20 +1,20 @@
 import gymnasium
 import os
 import sys
+import torch
 
 sys.path.append(os.pardir)
 import modules
-import torch
 
-environment = gymnasium.make('LunarLander-v3', render_mode='human')
-observation, _ = environment.reset()
-q = modules.Q(environment.action_space.n, *environment.observation_space.shape)
+env = gymnasium.make('LunarLander-v3', render_mode='human')
+q = modules.Q(*env.observation_space.shape, env.action_space.n)
 q.eval()
 q.load_state_dict(torch.load('Deep Q-learning.pth', weights_only=True))
+state, _ = env.reset()
 while True:
-    action = q(torch.Tensor(observation)).argmax().item()
-    next_observation, _, terminated, truncated, _ = environment.step(action)
+    action = q(torch.Tensor(state)).argmax().item()
+    next_state, _, terminated, truncated, _ = env.step(action)
     if terminated or truncated:
         break
-    observation = next_observation
-environment.close()
+    state = next_state
+env.close()

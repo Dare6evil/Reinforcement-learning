@@ -8,22 +8,22 @@ sys.path.append(os.pardir)
 import data
 import modules
 
-annealing_num_steps = 1000
 batch_size = 32
 buffer_size = 10000
 env = gymnasium.make('LunarLander-v3', render_mode='human')
 eps_end = 0.1
 eps_init = 1.0
 eps = eps_init
-gamma = 0.9
-lr = 0.01
+gamma = 0.98
+lr = 0.0005
 num_episodes = 300
-q = modules.Q(*env.observation_space.shape, env.action_space.n)
+annealing_num_steps = num_episodes // 2
+q = modules.Q(env.action_space.n, *env.observation_space.shape)
 optimizer = torch.optim.SGD(q.parameters(), lr)
 replay_buffer = data.ReplayBuffer(buffer_size)
 state, _ = env.reset()
 sync_interval = 20
-target_q = modules.Q(*env.observation_space.shape, env.action_space.n)
+target_q = modules.Q(env.action_space.n, *env.observation_space.shape)
 for i in range(num_episodes):
     while True:
         if eps < numpy.random.rand():

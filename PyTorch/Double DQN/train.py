@@ -1,3 +1,4 @@
+from matplotlib import pyplot
 import gymnasium
 import numpy
 import os
@@ -18,13 +19,16 @@ gamma = 0.98
 lr = 0.0005
 num_episodes = 300
 annealing_num_steps = num_episodes // 2
+numpy.random.seed(42)
 q = modules.Q(env.action_space.n, *env.observation_space.shape)
 optimizer = torch.optim.SGD(q.parameters(), lr)
 replay_buffer = data.ReplayBuffer(buffer_size)
-state, _ = env.reset()
+state, _ = env.reset(seed=42)
 sync_interval = 20
 target_q = modules.Q(env.action_space.n, *env.observation_space.shape)
+total_rewards = []
 for i in range(num_episodes):
+    total_reward = 0
     while True:
         if eps < numpy.random.rand():
             action = q(torch.Tensor(state)).argmax().item()
@@ -35,6 +39,7 @@ for i in range(num_episodes):
         replay_buffer.add(state, action, reward, next_state, int(done),
                           abs((1 - int(done)) * gamma * q(torch.Tensor(next_state).detach()).max() + reward -
                               q(torch.Tensor(state))[action]))
+        total_reward += reward
         if batch_size < len(replay_buffer):
             state_batch, action_batch, reward_batch, next_state_batch, done_batch, _ = replay_buffer.sample(batch_size)
             loss = torch.nn.functional.mse_loss((1 - torch.Tensor(numpy.array(done_batch))) * gamma *
@@ -54,5 +59,8 @@ for i in range(num_episodes):
     eps = max(eps - (eps_init - eps_end) / annealing_num_steps, eps_end)
     if not i % sync_interval:
         target_q.load_state_dict(q.state_dict())
+    total_rewards.append(total_reward)
 env.close()
+pyplot.plot(total_rewards)
+pyplot.show()
 torch.save(q.state_dict(), 'Double DQN.pth')

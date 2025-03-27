@@ -32,9 +32,8 @@ for _ in range(num_episodes):
             state, _ = env.reset()
             break
         state = next_state
-    for _, reward in reversed(memory):
+    for prob, reward in reversed(memory):
         g = g * gamma + reward
-    for prob, _ in reversed(memory):
         loss += -g * torch.log(prob)
     optimizer.zero_grad()
     loss.backward()
@@ -43,4 +42,4 @@ for _ in range(num_episodes):
 env.close()
 pyplot.plot(total_rewards)
 pyplot.show()
-torch.save(pi.state_dict(), 'Policy Gradient.pth')
+torch.save(pi.state_dict(), 'REINFORCE.pth')

@@ -19,11 +19,13 @@ gamma = 0.98
 lr = 0.0005
 num_episodes = 300
 annealing_num_steps = num_episodes // 2
-numpy.random.seed(42)
 q = modules.Q(env.action_space.n, *env.observation_space.shape)
 optimizer = torch.optim.SGD(q.parameters(), lr)
 replay_buffer = data.ReplayBuffer(buffer_size)
-state, _ = env.reset(seed=42)
+seed=42
+numpy.random.seed(seed)
+torch.manual_seed(seed)
+state, _ = env.reset(seed=seed)
 sync_interval = 20
 target_q = modules.Q(env.action_space.n, *env.observation_space.shape)
 total_rewards = []

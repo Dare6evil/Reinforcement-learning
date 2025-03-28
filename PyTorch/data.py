@@ -13,6 +13,6 @@ class ReplayBuffer:
         self.buffer.append(args)
 
     def sample(self, batch_size):
-        delta = numpy.array([self.buffer[i][-1].detach() for i in range(len(self))])
+        delta = numpy.array([self.buffer[i][-1].cpu().detach() for i in range(len(self))])
         delta -= delta.max()
         return zip(*[self.buffer[i] for i in numpy.random.choice(len(self), batch_size, p=delta / delta.sum())])

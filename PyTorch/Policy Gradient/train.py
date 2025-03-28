@@ -54,4 +54,4 @@ for _ in range(num_episodes):
 env.close()
 pyplot.plot(total_rewards)
 pyplot.show()
-torch.save(pi.state_dict(), 'Policy Gradient.pth')
+# torch.save(pi.state_dict(), 'Policy Gradient.pth')

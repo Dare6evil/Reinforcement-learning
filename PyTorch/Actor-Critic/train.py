@@ -25,10 +25,6 @@ for run in range(1, 1 + runs):
     v.to(device)
     optimizer_v = torch.optim.Adam(v.parameters(), lr_v)
     for episode in range(episodes):
-        g = 0
-        loss_pi = 0
-        loss_v = 0
-        memory = []
         total_reward = 0
         while True:
             b = v(torch.Tensor(state).to(device))
@@ -36,25 +32,22 @@ for run in range(1, 1 + runs):
             action = numpy.random.choice(len(probs), p=probs.detach().cpu().numpy())
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            loss_v += torch.nn.functional.mse_loss(
-                (1 - done) * gamma * v(torch.Tensor(next_state).to(device).detach()) + reward, b)
-            memory.append([b, probs[action], reward])
+            target = (1 - done) * gamma * v(torch.Tensor(next_state).to(device).detach()) + reward
+            loss_pi = -(target - b) * torch.log(probs[action])
+            optimizer_pi.zero_grad()
+            loss_pi.backward(retain_graph=True)
+            loss_v = torch.nn.functional.mse_loss(target, b)
+            optimizer_v.zero_grad()
+            loss_v.backward()
+            optimizer_pi.step()
+            optimizer_v.step()
             total_reward += reward
             if done:
                 state, _ = env.reset()
                 break
             state = next_state
-        for b, prob, reward in reversed(memory):
-            g = g * gamma + reward
-            loss_pi += -(g - b) * torch.log(prob)
-        optimizer_pi.zero_grad()
-        loss_pi.backward(retain_graph=True)
-        optimizer_v.zero_grad()
-        loss_v.backward()
-        optimizer_pi.step()
-        optimizer_v.step()
         reward_history[episode] += (total_reward - reward_history[episode]) / run
-    # torch.save(pi.state_dict(), "REINFORCE.pth")
+    # torch.save(pi.state_dict(), "Actor-Critic.pth")
 env.close()
 pyplot.plot(reward_history)
 pyplot.show()

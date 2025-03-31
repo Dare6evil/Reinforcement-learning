@@ -12,7 +12,7 @@ env = gymnasium.make("CartPole-v1", render_mode="human")
 pi = modules.Policy(env.action_space.n, *env.observation_space.shape)
 pi.to(device)
 pi.eval()
-pi.load_state_dict(torch.load("REINFORCE.pth", weights_only=True))
+pi.load_state_dict(torch.load("Actor-Critic.pth", weights_only=True))
 state, _ = env.reset()
 while True:
     action = numpy.random.choice(env.action_space.n, p=pi(torch.Tensor(state).to(device)).detach().cpu().numpy())

@@ -7,12 +7,12 @@ import torch
 sys.path.append(os.pardir)
 import modules
 
-device = torch.device('cpu' if not torch.cuda.is_available() else 'cuda:0')
-env = gymnasium.make('CartPole-v0', render_mode='human')
+device = torch.device("cpu" if not torch.cuda.is_available() else "cuda:0")
+env = gymnasium.make("CartPole-v1", render_mode="human")
 pi = modules.Policy(env.action_space.n, *env.observation_space.shape)
 pi.to(device)
 pi.eval()
-pi.load_state_dict(torch.load('Policy Gradient.pth', weights_only=True))
+pi.load_state_dict(torch.load("Policy Gradient.pth", weights_only=True))
 state, _ = env.reset()
 while True:
     action = numpy.random.choice(env.action_space.n, p=pi(torch.Tensor(state).to(device)).detach().cpu().numpy())

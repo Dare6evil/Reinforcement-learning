@@ -11,8 +11,8 @@ import modules
 
 batch_size = 32
 buffer_size = 100000
-device = torch.device('cpu' if not torch.cuda.is_available() else 'cuda:0')
-env = gymnasium.make('CartPole-v0', render_mode='human')
+device = torch.device("cpu" if not torch.cuda.is_available() else "cuda:0")
+env = gymnasium.make("CartPole-v1", render_mode="human")
 episodes = 300
 annealing_num_steps = episodes // 2
 epsilon_end = 0.05
@@ -32,6 +32,7 @@ for run in range(1, 1 + runs):
     q_target = modules.Q(env.action_space.n, *env.observation_space.shape)
     q_target.to(device)
     for episode in range(episodes):
+        print(episode)
         total_reward = 0
         while True:
             if epsilon < numpy.random.rand():
@@ -40,20 +41,17 @@ for run in range(1, 1 + runs):
                 action = numpy.random.choice(env.action_space.n)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            replay_buffer.add(state, action, reward, next_state, int(done), abs((1 - int(done)) * gamma * q(
-                torch.Tensor(next_state).to(device).detach()).max() + reward - q(torch.Tensor(state).to(device))[
-                                                                                    action]))
+            replay_buffer.add(state, action, reward, next_state, int(done))
             total_reward += reward
             if batch_size < len(replay_buffer):
-                state_batch, action_batch, reward_batch, next_state_batch, done_batch, _ = replay_buffer.sample(
+                state_batch, action_batch, reward_batch, next_state_batch, done_batch = replay_buffer.sample(
                     batch_size)
+                q_batch = q(torch.Tensor(numpy.array(state_batch)).to(device))
                 loss = torch.nn.functional.mse_loss((1 - torch.Tensor(numpy.array(done_batch)).to(device)) * gamma *
                                                     q_target(torch.Tensor(numpy.array(next_state_batch)).to(
-                                                        device).detach())[numpy.arange(batch_size), q(
-                                                        torch.Tensor(numpy.array(state_batch)).to(device)).argmax(
-                                                        dim=1)] + torch.Tensor(reward_batch).to(device),
-                                                    q(torch.Tensor(numpy.array(state_batch)).to(device))[
-                                                        numpy.arange(batch_size), action_batch])
+                                                        device).detach())[
+                                                        numpy.arange(batch_size), q_batch.argmax(dim=1)] + torch.Tensor(
+                    reward_batch).to(device), q_batch[numpy.arange(batch_size), action_batch])
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -65,7 +63,7 @@ for run in range(1, 1 + runs):
         if not episode % sync_interval:
             q_target.load_state_dict(q.state_dict())
         reward_history[episode] += (total_reward - reward_history[episode]) / run
+    # torch.save(q.state_dict(), "Double DQN.pth")
 env.close()
 pyplot.plot(reward_history)
 pyplot.show()
-# torch.save(q.state_dict(), 'Double DQN.pth')

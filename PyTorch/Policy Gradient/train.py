@@ -8,14 +8,14 @@ import torch
 sys.path.append(os.pardir)
 import modules
 
-device = torch.device('cpu' if not torch.cuda.is_available() else 'cuda:0')
-env = gymnasium.make('CartPole-v0', render_mode='human')
+device = torch.device("cpu" if not torch.cuda.is_available() else "cuda:0")
+env = gymnasium.make("CartPole-v1", render_mode="human")
 episodes = 3000
 gamma = 0.98
 lr_pi = 0.0002
 lr_v = 0.0005
 reward_history = [0] * episodes
-runs =100
+runs = 100
 for run in range(1, 1 + runs):
     pi = modules.Policy(env.action_space.n, *env.observation_space.shape)
     pi.to(device)
@@ -55,7 +55,8 @@ for run in range(1, 1 + runs):
         optimizer_pi.step()
         optimizer_v.step()
         reward_history[episode] += (total_reward - reward_history[episode]) / run
+    # torch.save(pi.state_dict(), "Policy Gradient.pth")
 env.close()
 pyplot.plot(reward_history)
 pyplot.show()
-# torch.save(pi.state_dict(), 'Policy Gradient.pth')
+#

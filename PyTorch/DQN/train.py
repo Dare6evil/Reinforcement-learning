@@ -11,8 +11,8 @@ import modules
 
 batch_size = 32
 buffer_size = 100000
-device = torch.device('cpu' if not torch.cuda.is_available() else 'cuda:0')
-env = gymnasium.make('CartPole-v0', render_mode='human')
+device = torch.device("cpu" if not torch.cuda.is_available() else "cuda:0")
+env = gymnasium.make("CartPole-v1", render_mode="human")
 episodes = 300
 annealing_num_steps = episodes // 2
 epsilon_end = 0.05
@@ -40,12 +40,10 @@ for run in range(1, 1 + runs):
                 action = numpy.random.choice(env.action_space.n)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            replay_buffer.add(state, action, reward, next_state, int(done), abs((1 - int(done)) * gamma * q(
-                torch.Tensor(next_state).to(device).detach()).max() + reward - q(torch.Tensor(state).to(device))[
-                                                                                    action]))
+            replay_buffer.add(state, action, reward, next_state, int(done))
             total_reward += reward
             if batch_size < len(replay_buffer):
-                state_batch, action_batch, reward_batch, next_state_batch, done_batch, _ = replay_buffer.sample(
+                state_batch, action_batch, reward_batch, next_state_batch, done_batch = replay_buffer.sample(
                     batch_size)
                 loss = torch.nn.functional.mse_loss(
                     (1 - torch.Tensor(numpy.array(done_batch)).to(device)) * gamma * q_target(
@@ -63,7 +61,7 @@ for run in range(1, 1 + runs):
         if not episode % sync_interval:
             q_target.load_state_dict(q.state_dict())
         reward_history[episode] += (total_reward - reward_history[episode]) / run
+    # torch.save(q.state_dict(), "DQN.pth")
 env.close()
 pyplot.plot(reward_history)
 pyplot.show()
-# torch.save(q.state_dict(), 'DQN.pth')

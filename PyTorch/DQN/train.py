@@ -1,24 +1,25 @@
 from matplotlib import pyplot
-import gymnasium
-import numpy
 import os
 import sys
-import torch
 
 sys.path.append(os.pardir)
 import data
+import gymnasium
 import modules
+import numpy
+import torch
 
 batch_size = 32
 buffer_size = 100000
 device = torch.device("cpu" if not torch.cuda.is_available() else "cuda:0")
-env = gymnasium.make("CartPole-v1", render_mode="human")
+env = gymnasium.make("CartPole-v0", render_mode="human")
 episodes = 300
 annealing_num_steps = episodes // 2
-epsilon_end = 0.05
+epsilon_end = 0.1
 epsilon_init = 1.0
 gamma = 0.98
 lr = 0.0005
+m = 0
 reward_history = [0] * episodes
 runs = 100
 sync_interval = 20
@@ -27,10 +28,10 @@ for run in range(1, 1 + runs):
     q = modules.Q(env.action_space.n, *env.observation_space.shape)
     q.to(device)
     optimizer = torch.optim.Adam(q.parameters(), lr)
-    replay_buffer = data.ReplayBuffer(buffer_size)
-    state, _ = env.reset()
     q_target = modules.Q(env.action_space.n, *env.observation_space.shape)
     q_target.to(device)
+    replay_buffer = data.ReplayBuffer(buffer_size)
+    state, _ = env.reset()
     for episode in range(episodes):
         total_reward = 0
         while True:
@@ -41,10 +42,8 @@ for run in range(1, 1 + runs):
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             replay_buffer.add(state, action, reward, next_state, int(done))
-            total_reward += reward
             if batch_size < len(replay_buffer):
-                state_batch, action_batch, reward_batch, next_state_batch, done_batch = replay_buffer.sample(
-                    batch_size)
+                state_batch, action_batch, reward_batch, next_state_batch, done_batch = replay_buffer.sample(batch_size)
                 loss = torch.nn.functional.mse_loss(
                     (1 - torch.Tensor(numpy.array(done_batch)).to(device)) * gamma * q_target(
                         torch.Tensor(numpy.array(next_state_batch)).to(device).detach()).max(
@@ -57,11 +56,16 @@ for run in range(1, 1 + runs):
                 state, _ = env.reset()
                 break
             state = next_state
+            total_reward += reward
         epsilon = max(epsilon - (epsilon_init - epsilon_end) / annealing_num_steps, epsilon_end)
+        if m < total_reward:
+            m = total_reward
+            torch.save(q.state_dict(), "DQN.pth")
         if not episode % sync_interval:
             q_target.load_state_dict(q.state_dict())
         reward_history[episode] += (total_reward - reward_history[episode]) / run
-    # torch.save(q.state_dict(), "DQN.pth")
 env.close()
 pyplot.plot(reward_history)
+pyplot.xlabel("Episode")
+pyplot.ylabel("Total Reward")
 pyplot.show()

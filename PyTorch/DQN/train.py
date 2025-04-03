@@ -52,11 +52,11 @@ for run in range(1, 1 + runs):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+            total_reward += reward
             if done:
                 state, _ = env.reset()
                 break
             state = next_state
-            total_reward += reward
         epsilon = max(epsilon - (epsilon_init - epsilon_end) / annealing_num_steps, epsilon_end)
         if m < total_reward:
             m = total_reward

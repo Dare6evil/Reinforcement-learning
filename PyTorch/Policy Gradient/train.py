@@ -32,11 +32,11 @@ for run in range(1, 1 + runs):
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             memory.append([probs[action], reward])
-            total_reward += reward
             if done:
                 state, _ = env.reset()
                 break
             state = next_state
+            total_reward += reward
         for _, reward in reversed(memory):
             g = g * gamma + reward
         for prob, _ in memory:

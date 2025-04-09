@@ -1,18 +1,19 @@
 from matplotlib import pyplot
-import gymnasium
-import numpy
 import os
 import sys
-import torch
 
 sys.path.append(os.pardir)
+import gymnasium
 import modules
+import numpy
+import torch
 
 device = torch.device("cpu" if not torch.cuda.is_available() else "cuda:0")
-env = gymnasium.make("CartPole-v1", render_mode="human")
+env = gymnasium.make("CartPole-v0", render_mode="human")
 episodes = 3000
 gamma = 0.98
 lr = 0.0002
+m = 0
 reward_history = [0] * episodes
 runs = 100
 for run in range(1, 1 + runs):
@@ -31,19 +32,23 @@ for run in range(1, 1 + runs):
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             memory.append([probs[action], reward])
-            total_reward += reward
             if done:
                 state, _ = env.reset()
                 break
             state = next_state
+            total_reward += reward
         for prob, reward in reversed(memory):
             g = g * gamma + reward
             loss += -g * torch.log(prob)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        if m < total_reward:
+            m = total_reward
+            torch.save(pi.state_dict(), "REINFORCE.pth")
         reward_history[episode] += (total_reward - reward_history[episode]) / run
-    # torch.save(pi.state_dict(), "REINFORCE.pth")
 env.close()
 pyplot.plot(reward_history)
+pyplot.xlabel("Episode")
+pyplot.ylabel("Total Reward")
 pyplot.show()

@@ -10,7 +10,7 @@ import torch
 
 device = torch.device("cpu" if not torch.cuda.is_available() else "cuda:0")
 env = gymnasium.make("CartPole-v0", render_mode="human")
-episodes = 300
+episodes = 3000
 gamma = 0.98
 lr_pi = 0.0002
 lr_v = 0.0005

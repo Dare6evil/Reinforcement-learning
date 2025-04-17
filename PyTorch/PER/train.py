@@ -21,7 +21,7 @@ gamma = 0.98
 lr = 0.0005
 m = 0
 reward_history = [0] * episodes
-runs = 100
+runs = 3
 sync_interval = 20
 for run in range(1, 1 + runs):
     epsilon = epsilon_init
@@ -30,7 +30,7 @@ for run in range(1, 1 + runs):
     optimizer = torch.optim.Adam(q.parameters(), lr)
     q_target = modules.Q(env.action_space.n, *env.observation_space.shape)
     q_target.to(device)
-    replay_buffer = data.ReplayBuffer(buffer_size)
+    per = data.PER(buffer_size)
     state, _ = env.reset()
     for episode in range(episodes):
         total_reward = 0
@@ -41,9 +41,10 @@ for run in range(1, 1 + runs):
                 action = numpy.random.choice(env.action_space.n)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            replay_buffer.add(state, action, reward, next_state, int(done))
-            if batch_size < len(replay_buffer):
-                state_batch, action_batch, reward_batch, next_state_batch, done_batch = replay_buffer.sample(batch_size)
+            per.add(state, action, reward, next_state, int(done),
+                    abs((1 - done) * gamma * q_target(next_state).max(dim=1) + reward - q(state)[action]))
+            if batch_size < len(per):
+                state_batch, action_batch, reward_batch, next_state_batch, done_batch = per.sample(batch_size)
                 loss = torch.nn.functional.mse_loss(
                     (1 - torch.Tensor(numpy.array(done_batch)).to(device)) * gamma * q_target(
                         torch.Tensor(numpy.array(next_state_batch)).to(device).detach()).max(

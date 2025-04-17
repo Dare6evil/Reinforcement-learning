@@ -21,7 +21,7 @@ gamma = 0.98
 lr = 0.0005
 m = 0
 reward_history = [0] * episodes
-runs = 100
+runs = 3
 sync_interval = 20
 for run in range(1, 1 + runs):
     epsilon = epsilon_init

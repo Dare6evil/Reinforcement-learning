@@ -21,7 +21,7 @@ gamma = 0.98
 lr = 0.0005
 m = 0
 reward_history = [0] * episodes
-runs = 100
+runs = 3
 sync_interval = 20
 for run in range(1, 1 + runs):
     epsilon = epsilon_init
@@ -53,11 +53,11 @@ for run in range(1, 1 + runs):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+            total_reward += reward
             if done:
                 state, _ = env.reset()
                 break
             state = next_state
-            total_reward += reward
         epsilon = max(epsilon - (epsilon_init - epsilon_end) / annealing_num_steps, epsilon_end)
         if m < total_reward:
             m = total_reward

@@ -15,7 +15,7 @@ gamma = 0.98
 lr = 0.0002
 m = 0
 reward_history = [0] * episodes
-runs = 100
+runs = 3
 for run in range(1, 1 + runs):
     pi = modules.Policy(env.action_space.n, *env.observation_space.shape)
     pi.to(device)
@@ -32,11 +32,11 @@ for run in range(1, 1 + runs):
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             memory.append([probs[action], reward])
+            total_reward += reward
             if done:
                 state, _ = env.reset()
                 break
             state = next_state
-            total_reward += reward
         for _, reward in reversed(memory):
             g = g * gamma + reward
         for prob, _ in memory:

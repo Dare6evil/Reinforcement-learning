@@ -17,9 +17,9 @@ total_reward = 0
 while True:
     action = q(torch.Tensor(state).to(device).detach()).argmax().item()
     next_state, reward, terminated, _, _ = env.step(action)
+    total_reward += reward
     if terminated:
         break
     state = next_state
-    total_reward += reward
 env.close()
 print(total_reward)

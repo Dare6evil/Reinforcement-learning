@@ -21,7 +21,7 @@ gamma = 0.98
 lr = 0.0005
 m = 0
 reward_history = [0] * episodes
-runs = 3
+runs = 1  # 3
 sync_interval = 20
 for run in range(1, 1 + runs):
     epsilon = epsilon_init
@@ -42,17 +42,18 @@ for run in range(1, 1 + runs):
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             per.add(state, action, reward, next_state, int(done),
-                    abs((1 - done) * gamma * q_target(next_state).max(dim=1) + reward - q(state)[action]))
+                    abs((1 - done) * gamma * q_target(torch.Tensor(next_state).to(device)).max() + reward -
+                        q(torch.Tensor(state).to(device))[action]).detach().cpu())
             if batch_size < len(per):
                 state_batch, action_batch, reward_batch, next_state_batch, done_batch = per.sample(batch_size)
-                loss = torch.nn.functional.mse_loss(
-                    (1 - torch.Tensor(numpy.array(done_batch)).to(device)) * gamma * q_target(
-                        torch.Tensor(numpy.array(next_state_batch)).to(device).detach()).max(
-                        dim=1).values + torch.Tensor(reward_batch).to(device),
-                    q(torch.Tensor(numpy.array(state_batch)).to(device))[numpy.arange(batch_size), action_batch])
+                loss = torch.nn.functional.mse_loss((1 - torch.Tensor(done_batch).to(device)) * gamma * q_target(
+                    torch.Tensor(next_state_batch).to(device).detach()).max(dim=1).values + torch.Tensor(
+                    reward_batch).to(device), q(torch.Tensor(state_batch).to(device))[
+                                                        numpy.arange(batch_size), action_batch])
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                break  #
             total_reward += reward
             if done:
                 state, _ = env.reset()

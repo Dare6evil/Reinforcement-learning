@@ -17,6 +17,7 @@ m = 0
 reward_history = [0] * episodes
 runs = 3
 for run in range(1, 1 + runs):
+    print(run)
     pi = modules.Policy(env.action_space.n, *env.observation_space.shape)
     pi.to(device)
     optimizer = torch.optim.Adam(pi.parameters(), lr)
